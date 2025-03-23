@@ -23,14 +23,14 @@ export function App() {
   const loadAllTransactions = useCallback(async () => {
     transactionsByEmployeeUtils.invalidateData()
 
-  if (employees === null) {
-    setLoadingEmployees(true)
-    await employeeUtils.fetchAll()
-    setLoadingEmployees(false)
-  }
+    if (employees === null) {
+      setLoadingEmployees(true)
+      await employeeUtils.fetchAll()
+      setLoadingEmployees(false)
+    }
 
-  await paginatedTransactionsUtils.fetchAll()
-  }, [employeeUtils, paginatedTransactionsUtils, transactionsByEmployeeUtils])
+    await paginatedTransactionsUtils.fetchAll()
+  }, [employees, employeeUtils, paginatedTransactionsUtils, transactionsByEmployeeUtils])
 
   const loadTransactionsByEmployee = useCallback(
     async (employeeId: string) => {
@@ -77,7 +77,7 @@ export function App() {
         <div className="RampGrid">
           <Transactions transactions={transactions} />
 
-          {transactions !== null && (
+          {paginatedTransactions?.nextPage !== null && (
             <button
               className="RampButton"
               disabled={paginatedTransactionsUtils.loading}
@@ -88,6 +88,7 @@ export function App() {
               View More
             </button>
           )}
+
         </div>
       </main>
     </Fragment>
