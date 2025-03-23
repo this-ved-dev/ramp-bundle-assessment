@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react"
+import { Fragment, useCallback, useEffect, useState } from "react"
 import { InputSelect } from "./components/InputSelect"
 import { Instructions } from "./components/Instructions"
 import { Transactions } from "./components/Transactions"
@@ -6,19 +6,32 @@ import { useEmployees } from "./hooks/useEmployees"
 import { usePaginatedTransactions } from "./hooks/usePaginatedTransactions"
 import { useTransactionsByEmployee } from "./hooks/useTransactionsByEmployee"
 import { EMPTY_EMPLOYEE } from "./utils/constants"
-import { Employee } from "./utils/types"
+import { Employee, Transaction} from "./utils/types"
 
 export function App() {
   const { data: employees, ...employeeUtils } = useEmployees()
   const { data: paginatedTransactions, ...paginatedTransactionsUtils } = usePaginatedTransactions()
   const { data: transactionsByEmployee, ...transactionsByEmployeeUtils } = useTransactionsByEmployee()
   const [loadingEmployees, setLoadingEmployees] = useState(false)
+  const [localTransactions, setLocalTransactions] = useState<Transaction[] | null>(null)
+
+  useEffect(() => {
+    if (paginatedTransactions?.data) {
+      setLocalTransactions(paginatedTransactions.data)
+    } else if (transactionsByEmployee) {
+      setLocalTransactions(transactionsByEmployee)
+    }
+  }, [paginatedTransactions?.data, transactionsByEmployee])
+
+  const updateApproval = (transactionId: string, newValue: boolean) => {
+    setLocalTransactions((prev) =>
+      prev?.map((tx) =>
+        tx.id === transactionId ? { ...tx, approved: newValue } : tx
+      ) ?? null
+    )
+  }
 
 
-  const transactions = useMemo(
-    () => paginatedTransactions?.data ?? transactionsByEmployee ?? null,
-    [paginatedTransactions, transactionsByEmployee]
-  )
 
   const loadAllTransactions = useCallback(async () => {
     transactionsByEmployeeUtils.invalidateData()
@@ -75,7 +88,11 @@ export function App() {
         <div className="RampBreak--l" />
 
         <div className="RampGrid">
-          <Transactions transactions={transactions} />
+          <Transactions
+            transactions={localTransactions}
+            onTransactionApprovalChange={updateApproval}
+          />
+
 
           {paginatedTransactions?.nextPage !== null && (
             <button
